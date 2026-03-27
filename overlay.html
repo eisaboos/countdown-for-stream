@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Countdown Overlay</title>
+<style>
+body { margin:0; background:transparent; overflow:hidden; display:flex; justify-content:center; align-items:center; }
+#label { font-family: 'Orbitron', sans-serif; font-size:50px; color:white; text-align:center; }
+#timer { font-family: 'Orbitron', sans-serif; font-size:100px; font-weight:bold; text-align:center; color:white; }
+</style>
+</head>
+<body>
+<div id="overlay">
+<div id="label">Starting Soon</div>
+<div id="timer">00:00</div>
+</div>
+
+<script>
+// Parse URL parameters
+const urlParams = new URLSearchParams(window.location.search);
+let m = parseInt(urlParams.get('m')) || 5;
+let s = parseInt(urlParams.get('s')) || 0;
+const labelText = urlParams.get('label') || "Starting Soon";
+const color = "#" + (urlParams.get('color') || "ffffff");
+const glow = urlParams.get('glow') || 20;
+const stroke = urlParams.get('stroke') || 0;
+const strokeColor = "#" + (urlParams.get('strokeColor') || "000000");
+const font = urlParams.get('font') ? decodeURIComponent(urlParams.get('font')) : "'Orbitron',sans-serif";
+const effect = urlParams.get('effect') || "none";
+
+const labelEl = document.getElementById("label");
+const timerEl = document.getElementById("timer");
+
+labelEl.innerText = labelText;
+labelEl.style.fontFamily = font;
+timerEl.style.fontFamily = font;
+timerEl.style.color = color;
+timerEl.style.textShadow = `0 0 ${glow}px ${color}`;
+timerEl.style.webkitTextStroke = `${stroke}px ${strokeColor}`;
+
+// Effects
+if(effect==="pulse") timerEl.style.animation="pulse 1s infinite";
+if(effect==="zoom") timerEl.style.animation="zoom 1s infinite";
+if(effect==="shake") timerEl.style.animation="shake 0.5s infinite";
+
+let total = m*60 + s;
+function startTimer(){
+  const interval = setInterval(()=>{
+    let minutes = Math.floor(total/60);
+    let seconds = total%60;
+    timerEl.innerText = (minutes<10?"0"+minutes:minutes) + ":" + (seconds<10?"0"+seconds:seconds);
+    if(total>0) total--; else clearInterval(interval);
+  },1000);
+}
+startTimer();
+</script>
+
+</body>
+</html>
