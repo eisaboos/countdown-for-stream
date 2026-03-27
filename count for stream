@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eisaboos Countdown Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family: Arial,sans-serif; background:#0b0b0b; color:white; display:flex; flex-direction:column; min-height:100vh; }
+header { background:#1a1a1a; padding:15px 30px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+header h1 { font-family:'Orbitron',sans-serif; font-size:2rem; color:#9146ff; }
+nav a { color:white; margin-left:20px; text-decoration:none; font-weight:bold; }
+nav a:hover { color:#9146ff; }
+main { display:flex; flex-wrap:wrap; justify-content:center; align-items:flex-start; padding:30px; gap:20px; flex:1; transition:all 0.3s; }
+#controls { background:#1e1e1e; padding:20px; border-radius:10px; width:320px; transition:all 0.3s; }
+#controls h2 { margin-bottom:15px; text-align:center; }
+#controls label { display:block; margin:10px 0 5px; font-weight:bold; }
+#controls input, #controls select, #controls button { width:100%; padding:8px; font-size:16px; margin-bottom:10px; border-radius:5px; border:none; }
+#controls button { background:#9146ff; color:white; cursor:pointer; transition:0.3s; }
+#controls button:hover { background:#772ee5; }
+#controls .small-btn { background:#333; margin-top:5px; }
+#controls .small-btn:hover { background:#555; }
+#urlBox { background:#000; padding:10px; font-size:12px; word-break:break-all; border-radius:5px; margin-top:10px; }
+#preview { flex:1; background:#111; border-radius:10px; padding:20px; display:flex; justify-content:center; align-items:center; min-width:400px; min-height:400px; position:relative; overflow:hidden; transition:all 0.3s; }
+#overlay { text-align:center; position:relative; z-index:2; transition:all 0.3s; }
+#label { font-size:40px; margin-bottom:10px; font-family: 'Orbitron', sans-serif; transition:all 0.3s; }
+#timer { font-size:100px; font-weight:bold; font-family: 'Orbitron', sans-serif; text-shadow:0 0 20px #9146ff; -webkit-text-stroke: 0px #000; transition:all 0.3s; }
+#bgImage { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:1; transition:all 0.3s; }
+@keyframes pulse {0%{transform:scale(1);}50%{transform:scale(1.05);}100%{transform:scale(1);}}
+@keyframes zoom {0%{transform:scale(1);}50%{transform:scale(1.1);}100%{transform:scale(1);}}
+@keyframes shake {0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}50%{transform:translateX(5px);}75%{transform:translateX(-5px);}}
+footer { background:#1a1a1a; text-align:center; padding:15px 20px; font-size:14px; opacity:0.7; }
+footer a { color:#9146ff; text-decoration:none; }
+footer a:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+
+<header>
+<h1>Eisaboos Countdown</h1>
+<nav>
+<a href="#home">Home</a>
+<a href="#about">About Us</a>
+<a href="mailto:eisaboos@example.com">Contact</a>
+</nav>
+</header>
+
+<main>
+<div id="controls">
+<h2>Customize Countdown</h2>
+
+<label>Minutes</label>
+<input type="number" id="minutes" value="5">
+
+<label>Seconds</label>
+<input type="number" id="seconds" value="0">
+
+<label>Label</label>
+<input type="text" id="labelInput" value="Starting Soon">
+
+<label>Font</label>
+<select id="fontSelect">
+<option value="'Orbitron',sans-serif">Orbitron</option>
+<option value="'Roboto',sans-serif">Roboto</option>
+<option value="Arial,sans-serif">Arial</option>
+</select>
+
+<label>Text Color</label>
+<input type="color" id="color" value="#ffffff">
+
+<label>Glow / Shadow (px)</label>
+<input type="number" id="glow" value="20" min="0">
+
+<label>Stroke Width (px)</label>
+<input type="number" id="stroke" value="0" min="0">
+
+<label>Stroke Color</label>
+<input type="color" id="strokeColor" value="#000000">
+
+<label>Background Type</label>
+<select id="bg">
+<option value="black">Black</option>
+<option value="transparent">Transparent</option>
+<option value="image">Custom Image</option>
+</select>
+
+<label>Upload Background Image</label>
+<input type="file" id="bgUpload" accept="image/*">
+
+<label>Countdown Effect</label>
+<select id="effect">
+<option value="none">None</option>
+<option value="pulse">Pulse</option>
+<option value="zoom">Zoom</option>
+<option value="shake">Shake</option>
+</select>
+
+<button onclick="generateURL()">Generate OBS URL</button>
+<button class="small-btn" onclick="resetCountdown()">Reset</button>
+<button class="small-btn" onclick="openOBSPreview()">Open OBS Preview</button>
+<div id="urlBox"></div>
+</div>
+
+<div id="preview">
+<img id="bgImage" src="" alt="">
+<div id="overlay">
+<div id="label">Starting Soon</div>
+<div id="timer">05:00</div>
+</div>
+</div>
+</main>
+
+<footer>
+Made by <strong>Eisaboos</strong> | <a href="https://www.twitch.tv/eisaboos" target="_blank">Support on Twitch</a>
+</footer>
+
+<script>
+let total = 300;
+let interval;
+
+const minutesInput = document.getElementById("minutes");
+const secondsInput = document.getElementById("seconds");
+const labelInput = document.getElementById("labelInput");
+const fontSelect = document.getElementById("fontSelect");
+const colorInput = document.getElementById("color");
+const glowInput = document.getElementById("glow");
+const strokeInput = document.getElementById("stroke");
+const strokeColorInput = document.getElementById("strokeColor");
+const bgSelect = document.getElementById("bg");
+const bgUpload = document.getElementById("bgUpload");
+const effectSelect = document.getElementById("effect");
+const timerEl = document.getElementById("timer");
+const labelEl = document.getElementById("label");
+const bgImage = document.getElementById("bgImage");
+
+function updatePreview() {
+  const min = parseInt(minutesInput.value)||0;
+  const sec = parseInt(secondsInput.value)||0;
+  total = min*60 + sec;
+
+  labelEl.innerText = labelInput.value;
+  labelEl.style.fontFamily = fontSelect.value;
+  timerEl.style.fontFamily = fontSelect.value;
+
+  timerEl.style.color = colorInput.value;
+  timerEl.style.webkitTextStroke = `${strokeInput.value}px ${strokeColorInput.value}`;
+  timerEl.style.textShadow = `0 0 ${glowInput.value}px ${colorInput.value}`;
+
+  // Background
+  if(bgSelect.value === "image" && bgImage.src) { bgImage.style.display = "block"; }
+  else { bgImage.style.display = "none"; }
+  document.getElementById("preview").style.background = bgSelect.value==="black"?"#111":"transparent";
+
+  // Effects
+  timerEl.style.animation = "";
+  if(effectSelect.value==="pulse") timerEl.style.animation="pulse 1s infinite";
+  if(effectSelect.value==="zoom") timerEl.style.animation="zoom 1s infinite";
+  if(effectSelect.value==="shake") timerEl.style.animation="shake 0.5s infinite";
+}
+
+function startTimer() {
+  clearInterval(interval);
+  interval = setInterval(()=>{
+    let m = Math.floor(total/60);
+    let s = total%60;
+    timerEl.innerText = (m<10?"0"+m:m)+":"+(s<10?"0"+s:s);
+    if(total>0) total--;
+  },1000);
+}
+
+// Image upload
+bgUpload.addEventListener("change",function(e){
+  const file = e.target.files[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = function(ev){ bgImage.src = ev.target.result; updatePreview(); }
+    reader.readAsDataURL(file);
+  }
+});
+
+// Generate OBS URL
+function generateURL(){
+  const min = minutesInput.value;
+  const sec = secondsInput.value;
+  const label = encodeURIComponent(labelInput.value);
+  const color = colorInput.value.replace("#","");
+  const glow = glowInput.value;
+  const stroke = strokeInput.value;
+  const strokeColor = strokeColorInput.value.replace("#","");
+  const font = encodeURIComponent(fontSelect.value);
+  const bg = bgSelect.value;
+  const effect = effectSelect.value;
+
+  const url = `overlay.html?m=${min}&s=${sec}&label=${label}&color=${color}&glow=${glow}&stroke=${stroke}&strokeColor=${strokeColor}&font=${font}&bg=${bg}&effect=${effect}`;
+  document.getElementById("urlBox").innerText = url;
+}
+
+// Reset countdown
+function resetCountdown(){
+  minutesInput.value = 5;
+  secondsInput.value = 0;
+  labelInput.value = "Starting Soon";
+  colorInput.value = "#ffffff";
+  glowInput.value = 20;
+  strokeInput.value = 0;
+  strokeColorInput.value = "#000000";
+  fontSelect.value = "'Orbitron',sans-serif";
+  bgSelect.value = "black";
+  bgUpload.value = "";
+  effectSelect.value = "none";
+  updatePreview();
+  startTimer();
+}
+
+// OBS Preview
+function openOBSPreview(){
+  const min = minutesInput.value;
+  const sec = secondsInput.value;
+  const label = encodeURIComponent(labelInput.value);
+  const color = colorInput.value.replace("#","");
+  const glow = glowInput.value;
+  const stroke = strokeInput.value;
+  const strokeColor = strokeColorInput.value.replace("#","");
+  const font = encodeURIComponent(fontSelect.value);
+  const bg = bgSelect.value;
+  const effect = effectSelect.value;
+
+  const url = `overlay.html?m=${min}&s=${sec}&label=${label}&color=${color}&glow=${glow}&stroke=${stroke}&strokeColor=${strokeColor}&font=${font}&bg=${bg}&effect=${effect}`;
+  window.open(url, "_blank", "width=800,height=600");
+}
+
+// Live preview update
+document.querySelectorAll("input,select").forEach(el=>{
+  el.addEventListener("input",()=>{
+    updatePreview();
+    startTimer();
+  });
+});
+
+// Init
+updatePreview();
+startTimer();
+</script>
+
+</body>
+</html>
